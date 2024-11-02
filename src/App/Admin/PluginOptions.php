@@ -160,12 +160,14 @@ class PluginOptions
                 echo '<div>';
                 echo '<label for="' .  esc_attr(Constants::AATXT_OPTION_FIELD_TYPOLOGY) . '">' . esc_html__('Generation method', 'auto-alt-text') . '</label>';
                 echo '<p class="description">' . esc_html__("Which method do you want to use to generate the alt text for the images?", 'auto-alt-text') . '</p>';
-                $typology = get_option(Constants::AATXT_OPTION_FIELD_TYPOLOGY);
+                $typology = self::typology();
+
                 ?>
+
                 <select name="<?php echo esc_attr(Constants::AATXT_OPTION_FIELD_TYPOLOGY); ?>"
                         id="<?php echo esc_attr(Constants::AATXT_OPTION_FIELD_TYPOLOGY); ?>">
                     <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_DEACTIVATED); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_DEACTIVATED)); ?>><?php esc_html_e("Deactivated", 'auto-alt-text'); ?></option>
-                    <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_CHOICE_OPENAI); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_CHOICE_OPENAI)); ?>><?php esc_html_e("OpenAI's APIs (gpt-4o)", 'auto-alt-text'); ?></option>
+                    <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_CHOICE_OPENAI); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_CHOICE_OPENAI)); ?>><?php esc_html_e("OpenAI's APIs", 'auto-alt-text'); ?></option>
                     <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_CHOICE_AZURE); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_CHOICE_AZURE)); ?>><?php esc_html_e("Azure's APIs", 'auto-alt-text'); ?></option>
                     <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_CHOICE_ARTICLE_TITLE); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_CHOICE_ARTICLE_TITLE)); ?>><?php esc_html_e("Title of the article (not AI)", 'auto-alt-text'); ?></option>
                     <option value="<?php echo esc_attr(Constants::AATXT_OPTION_TYPOLOGY_CHOICE_ATTACHMENT_TITLE); ?>"<?php echo esc_attr(self::selected($typology, Constants::AATXT_OPTION_TYPOLOGY_CHOICE_ATTACHMENT_TITLE)); ?>><?php esc_html_e("Title of the attachment (not AI)", 'auto-alt-text'); ?></option>
@@ -178,11 +180,21 @@ class PluginOptions
                     esc_html__('Therefore, the alt text "Auto draft" will be inserted. To avoid this behavior, save the article draft first and then upload the image.', 'auto-alt-text') .
                     '</div>';
 
+                $openaiModel = self::openAiModel();
+
+                echo '<div class="plugin-option type-openai">';
+                echo '<label for="' .  esc_attr(Constants::AATXT_OPTION_FIELD_MODEL_OPENAI) . '">' . esc_html__('Model', 'auto-alt-text') . '</label>';
+
+                echo '<select name="' . esc_attr(Constants::AATXT_OPTION_FIELD_MODEL_OPENAI) . '" id="' . esc_attr(Constants::AATXT_OPTION_FIELD_MODEL_OPENAI) . '">';
+                foreach(Constants::AATXT_OPTION_FIELD_MODEL_OPENAI_OPTIONS as $key => $value) {
+                    echo '<option value="' . esc_attr($key) . '" ' . esc_attr(self::selected($openaiModel, $key)) . '>' . esc_html($value) . '</option>';
+                }
+                echo '</select>';
+                echo '</div>';
 
                 echo '<div class="plugin-option type-openai"><strong>' . esc_html__('Notice', 'auto-alt-text') . '</strong>: ' .
-                    esc_html__('This plugin leverages the new "gpt-4o" model from OpenAI to identify the content of the image.', 'auto-alt-text') . ' ' .
-                    esc_html__('Rarely it may happen that the “gpt-4o” model fails to generate correct alt text for the image.', 'auto-alt-text') . ' ' .
-                    esc_html__('In these cases, the call to the api will be re-performed using the gpt-4-turbo model as fallback.', 'auto-alt-text') . '<br>' .
+                    esc_html__('Rarely it may happen that the chosen model fails to generate correct alt text for the image.', 'auto-alt-text') . ' ' .
+                    esc_html__('In these cases, the call to the api will be re-performed using the gpt-4o-mini model as fallback.', 'auto-alt-text') . '<br>' .
                     esc_html__('In case of errors, it is still possible to find the specific reason stated on the', 'auto-alt-text') . ' <a href="' . esc_url(menu_page_url(Constants::AATXT_PLUGIN_OPTION_LOG_PAGE_SLUG, false)) . '">' . esc_html__('error log page', 'auto-alt-text') . '</a>.' .
                     '</div>';
 
@@ -311,6 +323,7 @@ class PluginOptions
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_API_KEY_OPENAI);
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_PROMPT_OPENAI, [self::class, 'sanitizeTextArea']);
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_TYPOLOGY, [self::class, 'sanitizeText']);
+        register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_MODEL_OPENAI, [self::class, 'sanitizeText']);
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_API_KEY_AZURE_COMPUTER_VISION);
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_ENDPOINT_AZURE_COMPUTER_VISION, [self::class, 'sanitizeUrl']);
         register_setting('auto_alt_text_options', Constants::AATXT_OPTION_FIELD_API_KEY_AZURE_TRANSLATE_INSTANCE);
@@ -325,6 +338,11 @@ class PluginOptions
     public static function typology(): string
     {
         return get_option(Constants::AATXT_OPTION_FIELD_TYPOLOGY);
+    }
+
+    public static function openAiModel(): string
+    {
+        return get_option(Constants::AATXT_OPTION_FIELD_MODEL_OPENAI) ?: Constants::AATXT_GPT4O;
     }
 
     /**

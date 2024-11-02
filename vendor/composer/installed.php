@@ -1,8 +1,8 @@
 <?php return array(
     'root' => array(
         'name' => 'valeriomonti/auto-alt-text',
-        'pretty_version' => 'trunk',
-        'version' => 'dev-trunk',
+        'pretty_version' => '1.0.0+no-version-set',
+        'version' => '1.0.0.0',
         'reference' => null,
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
@@ -11,8 +11,8 @@
     ),
     'versions' => array(
         'valeriomonti/auto-alt-text' => array(
-            'pretty_version' => 'trunk',
-            'version' => 'dev-trunk',
+            'pretty_version' => '1.0.0+no-version-set',
+            'version' => '1.0.0.0',
             'reference' => null,
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
